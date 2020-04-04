@@ -1,5 +1,6 @@
 #!/usr/bin/env python3.7
 
+import json
 import boto3
 import pyodbc
 from contextlib import contextmanager
@@ -11,7 +12,6 @@ elastic_ip = '18.216.175.192'
 any_ip = '0.0.0.0/0'
 sql_driver = '{ODBC Driver 17 for SQL Server}'
 sql_server = elastic_ip
-sql_database = 'cohauth'
 
 # Dynamic globals
 _client = boto3.client('ec2')
@@ -21,9 +21,6 @@ with open("/etc/auth/coh.json") as fp:
     sql_username = coh_credentials['sql_username']
     sql_password = coh_credentials['sql_password']
 
-sql_connection_string = "DRIVER={};SERVER={};DATABASE={};UID={};PWD={}".format(
-    sql_driver, sql_server, sql_database, sql_username, sql_password
-)
 
 
 # AWS functions
@@ -97,8 +94,11 @@ def close_coh_ports():
 
 
 @contextmanager
-def cursor():
+def cursor(dbname='cohauth'):
     # Acquire resources
+    sql_connection_string = "DRIVER={};SERVER={};DATABASE={};UID={};PWD={}".format(
+        sql_driver, sql_server, dbname, sql_username, sql_password
+    )
     connection = pyodbc.connect(sql_connection_string)
     _cursor = connection.cursor()
     try:
