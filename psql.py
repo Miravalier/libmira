@@ -38,7 +38,7 @@ class PSQL:
             self.read_connection.commit()
 
     @contextmanager
-    def write_cursor():
+    def write_cursor(self):
         cur = self.write_connection.cursor()
         try:
             yield cur
@@ -47,14 +47,14 @@ class PSQL:
             self.write_connection.commit()
 
     @contextmanager
-    def read_cursor():
+    def read_cursor(self):
         cur = self.read_connection.cursor()
         try:
             yield cur
         finally:
             cur.close()
 
-    def execute_and_return(*args, **kwargs):
+    def execute_and_return(self, *args, **kwargs):
         with self.read_write_cursor() as cur:
             cur.execute(*args, **kwargs)
             result = cur.fetchone()
@@ -63,17 +63,17 @@ class PSQL:
             else:
                 return result
 
-    def execute(*args, **kwargs):
+    def execute(self, *args, **kwargs):
         with self.write_lock:
             self.pending_writes.append((args, kwargs))
         self.write_semaphore.release()
 
-    def query(*args, **kwargs):
+    def query(self, *args, **kwargs):
         with self.read_cursor() as cur:
             cur.execute(*args, **kwargs)
             return cur.fetchall()
 
-    def single_query(*args, **kwargs):
+    def single_query(self, *args, **kwargs):
         with self.read_cursor() as cur:
             cur.execute(*args, **kwargs)
             result = cur.fetchone()
