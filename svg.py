@@ -301,6 +301,8 @@ class SVG:
                 svg.write(str(self))
             subprocess.run([
                 "convert",
+                "-alpha", "On",
+                "-background", "none",
                 "svg:" + str(path.with_suffix(".tmp")),
                 "png:" + str(path.with_suffix(".png"))
             ])
@@ -315,13 +317,16 @@ if __name__ == '__main__':
     GID = 0
     def ArgumentColor(text):
         global GID
-        GID += 1
-        try:
-            match = GRADIENT_PATTERN.match(text)
+        match = GRADIENT_PATTERN.match(text)
+        if match:
+            GID += 1
             return Gradient(
-                match.group(1), match.group(2), RADIAL, "gradient-{}".format(GID)
+                "#" + match.group(1),
+                "#" + match.group(2),
+                RADIAL,
+                "gradient-{}".format(GID)
             )
-        except:
+        else:
             return "#" + COLOR_PATTERN.match(text).group(1)
 
 
@@ -342,7 +347,7 @@ if __name__ == '__main__':
         'ability': SQUARE
     }
     def ArgumentShape(text):
-        return ArgumentShapes[text]
+        return ArgumentShapes[text.lower()]
 
     import argparse
     parser = argparse.ArgumentParser()
