@@ -33,11 +33,11 @@ RADIAL = 0
 LINEAR = 1
 
 SVG_PATTERN = re.compile(
-    r'<\s*svg[^>]*viewBox="([^"]*)"[^>]*>(.*?)<\s*/svg\s*>',
+    r'.*?<\s*svg[^>]*viewBox\s*=\s*"([^"]*)"[^>]*>(.*?)<\s*/svg\s*>.*?',
     re.DOTALL | re.I
 )
 PATH_PATTERN = re.compile(
-    r'<\s*path[^>]*d="([^"]*)"[^>]*/?>',
+    r'<\s*path[^>]*\sd="([^"]*)"[^>]*/?>',
     re.DOTALL | re.I
 )
 
@@ -68,7 +68,7 @@ def parse_paths(src):
     paths = [m.group(1) for m in PATH_PATTERN.finditer(svg_match.group(2))]
 
     # Return path data
-    return int(width), int(height), paths
+    return int(float(width)), int(float(height)), paths
 
 
 def indent(text, indent=1, token='    '):
@@ -307,3 +307,56 @@ class SVG:
             path.with_suffix('.tmp').unlink()
         else:
             raise ValueError("Unknown file type")
+
+
+if __name__ == '__main__':
+    GRADIENT_PATTERN = re.compile("#?([0-9a-f]+):#?([0-9a-f]+)", re.I)
+    COLOR_PATTERN = re.compile("#?([0-9a-f]+)", re.I)
+    GID = 0
+    def ArgumentColor(text):
+        global GID
+        GID += 1
+        try:
+            match = GRADIENT_PATTERN.match(text)
+            return Gradient(
+                match.group(1), match.group(2), RADIAL, "gradient-{}".format(GID)
+            )
+        except:
+            return "#" + COLOR_PATTERN.match(text).group(1)
+
+
+    ArgumentShapes = {
+        's': SQUARE,
+        'sq': SQUARE,
+        'square': SQUARE,
+        'r': SQUARE,
+        'rect': SQUARE,
+        'rectangle': SQUARE,
+        'c': CIRCLE,
+        'circle': CIRCLE,
+        'n': None,
+        'none': None,
+        'stamp': None,
+        '': None,
+        'entity': CIRCLE,
+        'ability': SQUARE
+    }
+    def ArgumentShape(text):
+        return ArgumentShapes[text]
+
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('input')
+    parser.add_argument('output')
+    parser.add_argument('--fg', type=ArgumentColor, default='#FFFFFF')
+    parser.add_argument('--bg', type=ArgumentColor, default='#969696:#646464')
+    parser.add_argument('--shape', type=ArgumentShape, default=None)
+    args = parser.parse_args()
+
+    svg = SVG(
+        args.input,
+        fg_fill=args.fg,
+        bg_fill=args.bg,
+        bg_shape=args.shape
+    )
+    svg.output(args.output)
