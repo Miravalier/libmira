@@ -15,3 +15,9 @@ class LRU(OrderedDict):
         if len(self) > self.maxsize:
             oldest = next(iter(self))
             del self[oldest]
+
+    def pop(self, key, default=None):
+        try:
+            super().pop(key)
+        except KeyError:
+            return default

@@ -158,12 +158,15 @@ class SVG:
                 bg_shape=None,
                 bg_fill=Gradient("#969696", "#646464", RADIAL, "gradient-bg"),
                 fg_fill="#FFFFFF",
-                shadow=True, clip=True,
+                fg_stroke=3,
+                shadow=False,
+                clip=True
             ):
         self.width, self.height, self.paths = parse_paths(src)
         self.bg_shape = bg_shape
         self.bg_fill = bg_fill
         self.fg_fill = fg_fill
+        self.fg_stroke = fg_stroke
         self.shadow = shadow
         self.clip = clip
 
@@ -260,15 +263,18 @@ class SVG:
             ))
 
         # Add paths
-        fg_attributes = ""
+        fg_attributes = []
+        if self.fg_stroke:
+            fg_attributes.append('stroke="black"')
+            fg_attributes.append('stroke-width="{}"'.format(self.fg_stroke))
         if self.clip:
-            fg_attributes += ' clip-path="url(#fg-clip)"'
+            fg_attributes.append('clip-path="url(#fg-clip)"')
         if self.shadow:
-            fg_attributes += ' filter="url(#shadow)"'
+            fg_attributes.append('filter="url(#shadow)"')
 
         for path in self.paths:
-            body.append('<path d="{}" fill="{}" fill-opacity="1"{}></path>'.format(
-                path, reference_of(self.fg_fill), fg_attributes
+            body.append('<path d="{}" fill="{}" fill-opacity="1" {}></path>'.format(
+                path, reference_of(self.fg_fill), " ".join(fg_attributes)
             ))
 
         # Return body
